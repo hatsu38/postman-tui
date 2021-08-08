@@ -14,25 +14,38 @@ func main() {
 
 	app := tview.NewApplication()
 
-	inputField := tview.NewInputField()
-	inputField.SetLabel("Request URL: ")
-	inputField.SetPlaceholder("https://httpbin.org/get")
-	inputField.SetTitle("URL")
-	inputField.SetFieldTextColor(tcell.ColorMaroon)
-	inputField.SetLabelColor(tcell.ColorBlue)
-	inputField.SetFieldBackgroundColor(tcell.ColorGray)
-	inputField.SetPlaceholderTextColor(tcell.ColorWhite)
-	inputField.SetBorder(true)
+	inputUrlField := tview.NewInputField()
+	inputUrlField.SetLabel("Request URL: ")
+	inputUrlField.SetPlaceholder("https://httpbin.org/get")
+	inputUrlField.SetTitle("URL")
+	inputUrlField.SetFieldTextColor(tcell.ColorMaroon)
+	inputUrlField.SetLabelColor(tcell.ColorBlue)
+	inputUrlField.SetFieldBackgroundColor(tcell.ColorGray)
+	inputUrlField.SetPlaceholderTextColor(tcell.ColorWhite)
+	inputUrlField.SetBorder(true)
 
+	// Display Response Text View
 	textView := tview.NewTextView()
 	textView.SetTitle("Response")
 	textView.SetBorder(true)
 
-	inputField.SetChangedFunc(func(text string) {
+	// Params Key Field
+	inputParamsKeyField := tview.NewInputField()
+	inputParamsKeyField.SetLabel("Params Key: ")
+	inputParamsKeyField.SetPlaceholder("key")
+	inputParamsKeyField.SetTitle("Request Pararms Key")
+	inputParamsKeyField.SetFieldTextColor(tcell.ColorMaroon)
+	inputParamsKeyField.SetLabelColor(tcell.ColorBlue)
+	inputParamsKeyField.SetFieldBackgroundColor(tcell.ColorGray)
+	inputParamsKeyField.SetPlaceholderTextColor(tcell.ColorWhite)
+	inputParamsKeyField.SetBorder(true)
+
+	inputUrlField.SetChangedFunc(func(text string) {
 		textView.SetText(text)
 	})
-	inputField.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+	inputUrlField.SetDoneFunc(func(key tcell.Key) {
+		switch key {
+		case tcell.KeyEnter:
 			text := textView.GetText(true)
 			req, _ := http.NewRequest("GET", text, nil)
 			client := new(http.Client)
@@ -53,14 +66,24 @@ func main() {
 			}
 			toFixBody := "{" + string(body) + "}}"
 			textView.SetText(toFixBody)
+		case tcell.KeyTab:
+			app.SetFocus(inputParamsKeyField)
+		}
+	})
+
+	inputParamsKeyField.SetDoneFunc(func(key tcell.Key) {
+		switch key {
+		case tcell.KeyTab:
+			app.SetFocus(inputUrlField)
 		}
 	})
 
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow).
-		AddItem(inputField, 3, 0, true).
-		AddItem(textView, 0, 1, false)
+		AddItem(inputUrlField, 0, 1, true).
+		AddItem(inputParamsKeyField, 0, 2, true).
+		AddItem(textView, 0, 4, false)
 
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
