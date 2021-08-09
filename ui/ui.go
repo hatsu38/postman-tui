@@ -200,24 +200,34 @@ func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable b
 
 func (g *Gui) GetParams(table *tview.Table) Params {
 	var params Params
-	key := table.GetCell(1, 1).Text
-	value := table.GetCell(1, 2).Text
-	param := Param {
-		Key: key,
-		Value: value,
+
+	rows := table.GetRowCount()
+	for r := 1; r < rows; r++ {
+		key := table.GetCell(r, 1).Text
+		value := table.GetCell(r, 2).Text
+		param := Param {
+			Key: key,
+			Value: value,
+		}
+		params = append(params, param)
 	}
-	s := append(params, param)
-	return s
+
+	return params
 }
 
 func (g *Gui) GetParamsText(params Params) string {
-	query := "?"
-	for _, v := range params {
+	var query string
+	for i, v := range params {
 		if v.Key == "" || v.Value == "" {
 			continue
 		}
-		text := fmt.Sprintf("%s=%s", v.Key, v.Value)
-		query += text
+		if i == 0 {
+			query += "?"
+		} else {
+			query += "&"
+		}
+		query += fmt.Sprintf("%s=%s", v.Key, v.Value)
 	}
+
 	return query
 }
