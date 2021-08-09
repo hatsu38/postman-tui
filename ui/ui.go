@@ -44,6 +44,27 @@ func Form(label, text string) *tview.InputField {
 	return field
 }
 
+func (g *Gui) GetRequestUrl(tableView *tview.Table) string {
+	field := g.UrlField
+	urlText := field.GetText()
+	params := g.GetParams(tableView)
+	query := g.GetParamsText(params)
+
+	return urlText + query
+}
+
+func (g *Gui) HttpRequest(url string) *http.Response {
+	req, _ := http.NewRequest("GET", url, nil)
+	client := new(http.Client)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		g.App.Stop()
+		os.Exit(1)
+	}
+	return resp
+}
 
 func (g *Gui) Run(i interface{}) error {
 	app := g.App
@@ -54,27 +75,17 @@ func (g *Gui) Run(i interface{}) error {
 	inputUrlField.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
-			text := inputUrlField.GetText()
-			params := g.GetParams(tableView)
-			query := g.GetParamsText(params)
-			reqUrl := text + query
-			req, _ := http.NewRequest("GET", reqUrl, nil)
-			client := new(http.Client)
-
-			resp, err := client.Do(req)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				app.Stop()
-				os.Exit(1)
-			}
+			url := g.GetRequestUrl(tableView)
+			resp := g.HttpRequest(url)
 			defer resp.Body.Close()
 
 			body, respErr := io.ReadAll(resp.Body)
 			if respErr != nil {
-				fmt.Fprintln(os.Stderr, err)
+				fmt.Fprintln(os.Stderr, respErr)
 				app.Stop()
 				os.Exit(1)
 			}
+
 			toFixBody := " " + string(body) + " "
 			textView.SetText(toFixBody)
 		case tcell.KeyTab:
