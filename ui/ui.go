@@ -17,6 +17,12 @@ type Gui struct {
 	Pages *tview.Pages
 }
 
+type Param struct {
+	Key string
+	Value string
+}
+type Params []Param
+
 func New() *Gui {
 	g := &Gui{
 		UrlField: Form("Request URL: ", "https://httpbin.org/get"),
@@ -49,7 +55,10 @@ func (g *Gui) Run(i interface{}) error {
 		switch key {
 		case tcell.KeyEnter:
 			text := inputUrlField.GetText()
-			req, _ := http.NewRequest("GET", text, nil)
+			params := g.GetParams(tableView)
+			query := g.GetParamsText(params)
+			reqUrl := text + query
+			req, _ := http.NewRequest("GET", reqUrl, nil)
 			client := new(http.Client)
 
 			resp, err := client.Do(req)
@@ -84,7 +93,7 @@ func (g *Gui) Run(i interface{}) error {
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(inputUrlField, 0, 1, true)
-	flex.AddItem(tableView, 0, 3, false)
+	flex.AddItem(tableView, 0, 1, false)
 	flex.AddItem(textView, 0, 5, false)
 
 	g.Pages.AddAndSwitchToPage("main", flex, true)
@@ -173,4 +182,29 @@ func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable b
 	tcell.SetSelectable(selectable)
 
 	return tcell
+}
+
+
+func (g *Gui) GetParams(table *tview.Table) Params {
+	var params Params
+	key := table.GetCell(1, 1).Text
+	value := table.GetCell(1, 2).Text
+	param := Param {
+		Key: key,
+		Value: value,
+	}
+	s := append(params, param)
+	return s
+}
+
+func (g *Gui) GetParamsText(params Params) string {
+	query := "?"
+	for _, v := range params {
+		if v.Key == "" || v.Value == "" {
+			continue
+		}
+		text := fmt.Sprintf("%s=%s", v.Key, v.Value)
+		query += text
+	}
+	return query
 }
