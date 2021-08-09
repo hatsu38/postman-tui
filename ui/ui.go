@@ -93,7 +93,7 @@ func (g *Gui) Run(i interface{}) error {
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(inputUrlField, 0, 1, true)
-	flex.AddItem(tableView, 0, 1, false)
+	flex.AddItem(tableView, 0, 3, false)
 	flex.AddItem(textView, 0, 5, false)
 
 	g.Pages.AddAndSwitchToPage("main", flex, true)
@@ -136,7 +136,12 @@ func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell) {
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
-			cell.Text = input.GetText()
+			txt := input.GetText()
+			cell.Text = txt
+			if txt != "" {
+				row, _ := tableView.GetSelection()
+				g.AddParamsRow(tableView, row + 1)
+			}
 			g.Pages.RemovePage("input")
 			g.ToTableFocus(tableView)
 		}
@@ -157,22 +162,30 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 func (g *Gui) Table() *tview.Table {
 	table := tview.NewTable()
 	table.SetBorders(true)
-	table.SetCell(0, 0, g.TableCell("Params", 1, tcell.ColorYellow, false))
-	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorYellow, false))
-	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorYellow, false))
-	table.SetCell(1, 0, g.TableCell("1", 1, tcell.ColorWhite, false))
-	table.SetCell(1, 1, g.TableCell("", 2, tcell.ColorWhite, true))
-	table.SetCell(1, 2, g.TableCell("", 2, tcell.ColorWhite, true))
+	g.AddTableHeader(table)
+	g.AddParamsRow(table, 1)
 	// 選択された状態でEnterされたとき
 	table.SetSelectedFunc(func(row int, column int) {
 		cell := table.GetCell(row, column)
 		cell.SetTextColor(tcell.ColorWhite)
-
 		g.Input(table, cell)
 	})
 
 	return table
 }
+
+func (g *Gui) AddTableHeader(table *tview.Table) {
+	table.SetCell(0, 0, g.TableCell("Params", 1, tcell.ColorYellow, false))
+	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorYellow, false))
+	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorYellow, false))
+}
+
+func (g *Gui) AddParamsRow(table *tview.Table, idx int) {
+	table.SetCell(idx, 0, g.TableCell(fmt.Sprint(idx), 1, tcell.ColorWhite, false))
+	table.SetCell(idx, 1, g.TableCell("", 2, tcell.ColorWhite, true))
+	table.SetCell(idx, 2, g.TableCell("", 2, tcell.ColorWhite, true))
+}
+
 
 func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable bool) *tview.TableCell {
 	tcell := tview.NewTableCell(title)
