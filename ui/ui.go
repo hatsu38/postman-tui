@@ -12,32 +12,43 @@ import (
 )
 
 type Gui struct {
-	TextView *tview.TextView
-	TableView *tview.Table
+	UrlField *tview.InputField
 	App   *tview.Application
 	Pages *tview.Pages
 }
 
 func New() *Gui {
 	g := &Gui{
-		TextView: TextView("Response"),
-		TableView: nil,
+		UrlField: Form("Request URL: ", "https://httpbin.org/get"),
 		App:   tview.NewApplication(),
 		Pages: tview.NewPages(),
 	}
 	return g
 }
 
+func Form(label, text string) *tview.InputField {
+	field := tview.NewInputField()
+	field.SetLabel(label)
+	field.SetFieldTextColor(tcell.ColorWhite)
+	field.SetLabelColor(tcell.ColorBlue)
+	field.SetFieldBackgroundColor(tcell.ColorPaleVioletRed)
+	field.SetBorder(true)
+	field.SetText(text)
+
+	return field
+}
+
+
 func (g *Gui) Run(i interface{}) error {
 	app := g.App
-	textView := g.TextView
-	inputUrlField := g.Form("Request URL: ", "https://httpbin.org/get", "URL")
+	textView := g.TextView("Response")
+	inputUrlField := g.UrlField
 	tableView := g.Table()
 
 	inputUrlField.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
-			text := textView.GetText(true)
+			text := inputUrlField.GetText()
 			req, _ := http.NewRequest("GET", text, nil)
 			client := new(http.Client)
 
@@ -58,26 +69,15 @@ func (g *Gui) Run(i interface{}) error {
 			toFixBody := "{" + string(body) + "}}"
 			textView.SetText(toFixBody)
 		case tcell.KeyTab:
-			app.SetFocus(tableView)
-			tableView.SetSelectable(true, true)
-			tableView.SetBordersColor(tcell.ColorPaleVioletRed)
-			tableView.Select(1, 1)
+			g.ToTableFocus(tableView)
 			inputUrlField.SetFieldBackgroundColor(tcell.ColorGray)
 		}
 	})
 
 	tableView.SetDoneFunc(func(key tcell.Key) {
 		switch key {
-		case tcell.KeyEnter:
-			row, column := tableView.GetSelection()
-			currentCell := tableView.GetCell(row, column)
-			currentCell.SetTextColor(tcell.ColorBlue)
-			currentCell.SetTransparency(true)
-			tableView.SetSelectable(true, true)
 		case tcell.KeyTab:
-			app.SetFocus(inputUrlField)
-			inputUrlField.SetFieldBackgroundColor(tcell.ColorPaleVioletRed)
-			tableView.SetBordersColor(tcell.ColorWhite)
+			g.ToUrlFieldFocus(tableView)
 		}
 	})
 
@@ -97,8 +97,7 @@ func (g *Gui) Run(i interface{}) error {
 	return nil
 }
 
-
-func TextView(title string) *tview.TextView {
+func (g *Gui) TextView(title string) *tview.TextView {
 	textView := tview.NewTextView()
 	textView.SetTitle(title)
 	textView.SetBorder(true)
@@ -106,20 +105,31 @@ func TextView(title string) *tview.TextView {
 	return textView
 }
 
-func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell, label string, width int) {
-	input := tview.NewInputField()
+func (g *Gui) ToTableFocus(tableView *tview.Table) {
+	g.App.SetFocus(tableView)
+	tableView.SetSelectable(true, true)
+	tableView.SetBordersColor(tcell.ColorPaleVioletRed)
+	g.UrlField.SetFieldBackgroundColor(tcell.ColorGray)
+}
+
+func (g *Gui) ToUrlFieldFocus(tableView *tview.Table) {
+	urlField := g.UrlField
+	g.App.SetFocus(urlField)
+	tableView.SetSelectable(false, false)
+	tableView.SetBordersColor(tcell.ColorPaleVioletRed)
+	urlField.SetFieldBackgroundColor(tcell.ColorPaleVioletRed)
+	tableView.SetBordersColor(tcell.ColorWhite)
+}
+
+func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell, label string) {
 	text := cell.Text
-	input.SetText(text)
-	input.SetLabel(label)
-	input.SetLabelWidth(width)
-	input.Autocomplete()
-	input.SetFieldBackgroundColor(tcell.ColorPaleVioletRed)
+	input := Form("params", text)
 	input.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEnter {
+		switch key {
+		case tcell.KeyEnter:
 			cell.Text = input.GetText()
-			tableView.SetSelectable(false, false)
 			g.Pages.RemovePage("input")
-			g.App.SetFocus(tableView)
+			g.ToTableFocus(tableView)
 		}
 	})
 
@@ -135,20 +145,6 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 	return grid
 }
 
-func (g *Gui) Form(label string, placeholder string, title string) *tview.InputField {
-	field := tview.NewInputField()
-	field.SetLabel(label)
-	field.SetPlaceholder(placeholder)
-	field.SetTitle(title)
-	field.SetFieldTextColor(tcell.ColorMaroon)
-	field.SetLabelColor(tcell.ColorBlue)
-	field.SetFieldBackgroundColor(tcell.ColorPaleVioletRed)
-	field.SetPlaceholderTextColor(tcell.ColorWhite)
-	field.SetBorder(true)
-
-	return field
-}
-
 func (g *Gui) Table() *tview.Table {
 	table := tview.NewTable()
 	table.SetBorders(true)
@@ -161,9 +157,9 @@ func (g *Gui) Table() *tview.Table {
 	// 選択された状態でEnterされたとき
 	table.SetSelectedFunc(func(row int, column int) {
 		cell := table.GetCell(row, column)
-		cell.SetTextColor(tcell.ColorBlue)
+		cell.SetTextColor(tcell.ColorWhite)
 
-		g.Input(table, cell, "params", 10)
+		g.Input(table, cell, "params")
 	})
 
 	return table
