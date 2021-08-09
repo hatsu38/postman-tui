@@ -28,14 +28,7 @@ func (g *Gui) Run(i interface{}) error {
 	app := g.App
 	textView := g.TextView("Response")
 	inputUrlField := g.Form("Request URL: ", "https://httpbin.org/get", "URL")
-	inputParamsKeyField := g.Form("Params Key: ", "key", "Request Pararms Key")
-
-	inputParamsKeyField.SetDoneFunc(func(key tcell.Key) {
-		switch key {
-		case tcell.KeyTab:
-			app.SetFocus(inputUrlField)
-		}
-	})
+	tableView := g.Table()
 
 	inputUrlField.SetDoneFunc(func(key tcell.Key) {
 		switch key {
@@ -61,15 +54,15 @@ func (g *Gui) Run(i interface{}) error {
 			toFixBody := "{" + string(body) + "}}"
 			textView.SetText(toFixBody)
 		case tcell.KeyTab:
-			app.SetFocus(inputParamsKeyField)
+			app.SetFocus(tableView)
 		}
 	})
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow).
 		AddItem(inputUrlField, 0, 1, true).
-		AddItem(inputParamsKeyField, 0, 2, true).
-		AddItem(textView, 0, 4, false)
+		AddItem(tableView, 0, 3, false).
+		AddItem(textView, 0, 5, false)
 
 	g.Pages.AddAndSwitchToPage("main", flex, true)
 
@@ -103,3 +96,18 @@ func (g *Gui) Form(label string, placeholder string, title string) *tview.InputF
 	return field
 }
 
+func (g *Gui) Table() *tview.Table {
+	table := tview.NewTable()
+	table.SetBorders(true)
+	table.SetCell(0, 0, g.TableCell("", 1, tcell.ColorYellow))
+	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorYellow))
+	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorYellow))
+	table.SetCell(1, 0, g.TableCell("1", 1, tcell.ColorRed))
+	table.SetCell(1, 1, g.TableCell("", 2, tcell.ColorWhite))
+	table.SetCell(1, 2, g.TableCell("", 2, tcell.ColorWhite))
+	return table
+}
+
+func (g *Gui) TableCell(title string, width int, color tcell.Color) *tview.TableCell {
+	return tview.NewTableCell(title).SetExpansion(width).SetAlign(tview.AlignCenter).SetTextColor(color)
+}
