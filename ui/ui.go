@@ -25,7 +25,7 @@ type Params []Param
 
 func New() *Gui {
 	g := &Gui{
-		UrlField: Form("Request URL: ", "https://httpbin.org/get"),
+		UrlField: Form(" Request URL: ", "https://httpbin.org/get"),
 		App:   tview.NewApplication(),
 		Pages: tview.NewPages(),
 	}
@@ -75,7 +75,7 @@ func (g *Gui) Run(i interface{}) error {
 				app.Stop()
 				os.Exit(1)
 			}
-			toFixBody := "{" + string(body) + "}}"
+			toFixBody := " " + string(body) + " "
 			textView.SetText(toFixBody)
 		case tcell.KeyTab:
 			g.ToTableFocus(tableView)
@@ -130,9 +130,9 @@ func (g *Gui) ToUrlFieldFocus(tableView *tview.Table) {
 	tableView.SetBordersColor(tcell.ColorWhite)
 }
 
-func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell, label string) {
+func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell) {
 	text := cell.Text
-	input := Form("params", text)
+	input := Form(" params", text)
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
@@ -168,7 +168,7 @@ func (g *Gui) Table() *tview.Table {
 		cell := table.GetCell(row, column)
 		cell.SetTextColor(tcell.ColorWhite)
 
-		g.Input(table, cell, "params")
+		g.Input(table, cell)
 	})
 
 	return table
