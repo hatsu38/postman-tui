@@ -25,7 +25,7 @@ type Params []Param
 
 func New() *Gui {
 	g := &Gui{
-		UrlField: Form("Request URL: ", "https://httpbin.org/get"),
+		UrlField: Form(" Request URL: ", "https://httpbin.org/get"),
 		App:   tview.NewApplication(),
 		Pages: tview.NewPages(),
 	}
@@ -75,7 +75,7 @@ func (g *Gui) Run(i interface{}) error {
 				app.Stop()
 				os.Exit(1)
 			}
-			toFixBody := "{" + string(body) + "}}"
+			toFixBody := " " + string(body) + " "
 			textView.SetText(toFixBody)
 		case tcell.KeyTab:
 			g.ToTableFocus(tableView)
@@ -93,7 +93,7 @@ func (g *Gui) Run(i interface{}) error {
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
 	flex.AddItem(inputUrlField, 0, 1, true)
-	flex.AddItem(tableView, 0, 1, false)
+	flex.AddItem(tableView, 0, 3, false)
 	flex.AddItem(textView, 0, 5, false)
 
 	g.Pages.AddAndSwitchToPage("main", flex, true)
@@ -130,13 +130,18 @@ func (g *Gui) ToUrlFieldFocus(tableView *tview.Table) {
 	tableView.SetBordersColor(tcell.ColorWhite)
 }
 
-func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell, label string) {
+func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell) {
 	text := cell.Text
-	input := Form("params", text)
+	input := Form(" params", text)
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
-			cell.Text = input.GetText()
+			txt := input.GetText()
+			cell.Text = txt
+			if txt != "" {
+				row, _ := tableView.GetSelection()
+				g.AddParamsRow(tableView, row + 1)
+			}
 			g.Pages.RemovePage("input")
 			g.ToTableFocus(tableView)
 		}
@@ -157,22 +162,30 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 func (g *Gui) Table() *tview.Table {
 	table := tview.NewTable()
 	table.SetBorders(true)
-	table.SetCell(0, 0, g.TableCell("Params", 1, tcell.ColorYellow, false))
-	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorYellow, false))
-	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorYellow, false))
-	table.SetCell(1, 0, g.TableCell("1", 1, tcell.ColorWhite, false))
-	table.SetCell(1, 1, g.TableCell("", 2, tcell.ColorWhite, true))
-	table.SetCell(1, 2, g.TableCell("", 2, tcell.ColorWhite, true))
+	g.AddTableHeader(table)
+	g.AddParamsRow(table, 1)
 	// 選択された状態でEnterされたとき
 	table.SetSelectedFunc(func(row int, column int) {
 		cell := table.GetCell(row, column)
 		cell.SetTextColor(tcell.ColorWhite)
-
-		g.Input(table, cell, "params")
+		g.Input(table, cell)
 	})
 
 	return table
 }
+
+func (g *Gui) AddTableHeader(table *tview.Table) {
+	table.SetCell(0, 0, g.TableCell("Params", 1, tcell.ColorYellow, false))
+	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorYellow, false))
+	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorYellow, false))
+}
+
+func (g *Gui) AddParamsRow(table *tview.Table, idx int) {
+	table.SetCell(idx, 0, g.TableCell(fmt.Sprint(idx), 1, tcell.ColorWhite, false))
+	table.SetCell(idx, 1, g.TableCell("", 2, tcell.ColorWhite, true))
+	table.SetCell(idx, 2, g.TableCell("", 2, tcell.ColorWhite, true))
+}
+
 
 func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable bool) *tview.TableCell {
 	tcell := tview.NewTableCell(title)
@@ -187,24 +200,34 @@ func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable b
 
 func (g *Gui) GetParams(table *tview.Table) Params {
 	var params Params
-	key := table.GetCell(1, 1).Text
-	value := table.GetCell(1, 2).Text
-	param := Param {
-		Key: key,
-		Value: value,
+
+	rows := table.GetRowCount()
+	for r := 1; r < rows; r++ {
+		key := table.GetCell(r, 1).Text
+		value := table.GetCell(r, 2).Text
+		param := Param {
+			Key: key,
+			Value: value,
+		}
+		params = append(params, param)
 	}
-	s := append(params, param)
-	return s
+
+	return params
 }
 
 func (g *Gui) GetParamsText(params Params) string {
-	query := "?"
-	for _, v := range params {
+	var query string
+	for i, v := range params {
 		if v.Key == "" || v.Value == "" {
 			continue
 		}
-		text := fmt.Sprintf("%s=%s", v.Key, v.Value)
-		query += text
+		if i == 0 {
+			query += "?"
+		} else {
+			query += "&"
+		}
+		query += fmt.Sprintf("%s=%s", v.Key, v.Value)
 	}
+
 	return query
 }
