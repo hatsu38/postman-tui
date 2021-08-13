@@ -35,10 +35,10 @@ func New() *Gui {
 func Form(label, text string) *tview.InputField {
 	field := tview.NewInputField()
 	field.SetLabel(label)
-	field.SetFieldTextColor(tcell.ColorWhite)
-	field.SetLabelColor(tcell.ColorBlue)
-	field.SetFieldBackgroundColor(tcell.ColorPaleVioletRed)
+	field.SetFieldBackgroundColor(tcell.ColorBlack)
 	field.SetBorder(true)
+	field.SetBorderColor(tcell.ColorGreen)
+	field.SetLabelColor(tcell.ColorIndianRed)
 	field.SetText(text)
 
 	return field
@@ -90,7 +90,6 @@ func (g *Gui) Run(i interface{}) error {
 			textView.SetText(toFixBody)
 		case tcell.KeyTab:
 			g.ToTableFocus(tableView)
-			inputUrlField.SetFieldBackgroundColor(tcell.ColorGray)
 		}
 	})
 
@@ -121,6 +120,8 @@ func (g *Gui) TextView(title string) *tview.TextView {
 	textView := tview.NewTextView()
 	textView.SetTitle(title)
 	textView.SetBorder(true)
+	textView.SetScrollable(true)
+	textView.SetTextColor(tcell.ColorGreen)
 
 	return textView
 }
@@ -128,22 +129,23 @@ func (g *Gui) TextView(title string) *tview.TextView {
 func (g *Gui) ToTableFocus(tableView *tview.Table) {
 	g.App.SetFocus(tableView)
 	tableView.SetSelectable(true, true)
-	tableView.SetBordersColor(tcell.ColorPaleVioletRed)
-	g.UrlField.SetFieldBackgroundColor(tcell.ColorGray)
+	tableView.SetBordersColor(tcell.ColorGreen)
+
+	g.UrlField.SetBorderColor(tcell.ColorWhite)
 }
 
 func (g *Gui) ToUrlFieldFocus(tableView *tview.Table) {
 	urlField := g.UrlField
 	g.App.SetFocus(urlField)
 	tableView.SetSelectable(false, false)
-	tableView.SetBordersColor(tcell.ColorPaleVioletRed)
-	urlField.SetFieldBackgroundColor(tcell.ColorPaleVioletRed)
 	tableView.SetBordersColor(tcell.ColorWhite)
+
+	urlField.SetBorderColor(tcell.ColorGreen)
 }
 
 func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell) {
 	text := cell.Text
-	input := Form(" params", text)
+	input := Form(" params: ", text)
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
@@ -187,9 +189,9 @@ func (g *Gui) Table() *tview.Table {
 }
 
 func (g *Gui) AddTableHeader(table *tview.Table) {
-	table.SetCell(0, 0, g.TableCell("Params", 1, tcell.ColorYellow, false))
-	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorYellow, false))
-	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorYellow, false))
+	table.SetCell(0, 0, g.TableCell("Params", 1, tcell.ColorIndianRed, false))
+	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorIndianRed, false))
+	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorIndianRed, false))
 }
 
 func (g *Gui) AddParamsRow(table *tview.Table, idx int) {
@@ -205,6 +207,7 @@ func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable b
 	tcell.SetAlign(tview.AlignCenter)
 	tcell.SetTextColor(color)
 	tcell.SetSelectable(selectable)
+	tcell.SetTransparency(true)
 
 	return tcell
 }
