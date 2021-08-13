@@ -31,7 +31,7 @@ func New() *Gui {
 		Pages: tview.NewPages(),
 		UrlField: NewForm(" Request URL: ", "https://httpbin.org/get"),
 		ParamsTable: NewTable(),
-		TextView: NewTextView("Response"),
+		TextView: NewTextView(" Response "),
 	}
 	return g
 }
@@ -89,7 +89,6 @@ func (g *Gui) HttpRequest(url string) *http.Response {
 		g.App.Stop()
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
 	return resp
 }
 
@@ -116,6 +115,7 @@ func (g *Gui) Run(i interface{}) error {
 		case tcell.KeyEnter:
 			url := g.GetRequestUrl()
 			resp := g.HttpRequest(url)
+			defer resp.Body.Close()
 
 			body := g.ParseResponse(resp)
 
@@ -134,7 +134,7 @@ func (g *Gui) Run(i interface{}) error {
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(inputUrlField, 0, 1, true)
+	flex.AddItem(inputUrlField, 3, 1, true)
 	flex.AddItem(tableView, 0, 3, false)
 	flex.AddItem(textView, 0, 5, false)
 
