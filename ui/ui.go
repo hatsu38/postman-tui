@@ -175,6 +175,7 @@ func (g *Gui) Table() *tview.Table {
 	table.SetBorders(true)
 	g.AddTableHeader(table)
 	g.AddParamsRow(table, 1)
+	table.SetFixed(1, 3)
 	// 選択された状態でEnterされたとき
 	table.SetSelectedFunc(func(row int, column int) {
 		cell := table.GetCell(row, column)
