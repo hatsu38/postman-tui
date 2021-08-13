@@ -25,14 +25,18 @@ type Params []Param
 
 func New() *Gui {
 	g := &Gui{
-		UrlField: Form(" Request URL: ", "https://httpbin.org/get"),
-		App:   tview.NewApplication(),
+		UrlField: NewForm(" Request URL: ", "https://httpbin.org/get"),
+		App:   NewApplication(),
 		Pages: tview.NewPages(),
 	}
 	return g
 }
 
-func Form(label, text string) *tview.InputField {
+func NewApplication() *tview.Application {
+	return tview.NewApplication().EnableMouse(true)
+}
+
+func NewForm(label, text string) *tview.InputField {
 	field := tview.NewInputField()
 	field.SetLabel(label)
 	field.SetFieldBackgroundColor(tcell.ColorBlack)
@@ -66,6 +70,17 @@ func (g *Gui) HttpRequest(url string) *http.Response {
 	return resp
 }
 
+func (g *Gui) ParseResponse(resp *http.Response) string {
+	body, respErr := io.ReadAll(resp.Body)
+	if respErr != nil {
+		fmt.Fprintln(os.Stderr, respErr)
+		g.App.Stop()
+		os.Exit(1)
+	}
+
+	return " " + string(body) + " "
+}
+
 func (g *Gui) Run(i interface{}) error {
 	app := g.App
 	textView := g.TextView("Response")
@@ -79,15 +94,9 @@ func (g *Gui) Run(i interface{}) error {
 			resp := g.HttpRequest(url)
 			defer resp.Body.Close()
 
-			body, respErr := io.ReadAll(resp.Body)
-			if respErr != nil {
-				fmt.Fprintln(os.Stderr, respErr)
-				app.Stop()
-				os.Exit(1)
-			}
+			body := g.ParseResponse(resp)
 
-			toFixBody := " " + string(body) + " "
-			textView.SetText(toFixBody)
+			textView.SetText(body)
 		case tcell.KeyTab:
 			g.ToTableFocus(tableView)
 		}
@@ -152,7 +161,7 @@ func (g *Gui) Input(tableView *tview.Table) {
 	labelCell := tableView.GetCell(0, col)
 	labelIndexCell := tableView.GetCell(row, 0)
 	label := fmt.Sprintf(" %s %s: ", labelCell.Text, labelIndexCell.Text)
-	input := Form(label, text)
+	input := NewForm(label, text)
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
@@ -173,7 +182,7 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 	grid := tview.NewGrid()
 	grid.SetColumns(0, width, 0)
 	grid.SetRows(0, height, 0)
-	grid.AddItem(p, 1, 1, 1, 1, 0, 0, true)
+	grid.AddItem(p, 1, 1, 1, 1, 1, 1, true)
 
 	return grid
 }
@@ -203,7 +212,6 @@ func (g *Gui) AddParamsRow(table *tview.Table, idx int) {
 	table.SetCell(idx, 1, g.TableCell("", 2, tcell.ColorWhite, true))
 	table.SetCell(idx, 2, g.TableCell("", 2, tcell.ColorWhite, true))
 }
-
 
 func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable bool) *tview.TableCell {
 	tcell := tview.NewTableCell(title)
