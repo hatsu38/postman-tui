@@ -12,9 +12,11 @@ import (
 )
 
 type Gui struct {
-	UrlField *tview.InputField
 	App   *tview.Application
 	Pages *tview.Pages
+	UrlField *tview.InputField
+	ParamsTable *tview.Table
+	TextView *tview.TextView
 }
 
 type Param struct {
@@ -25,9 +27,11 @@ type Params []Param
 
 func New() *Gui {
 	g := &Gui{
-		UrlField: NewForm(" Request URL: ", "https://httpbin.org/get"),
 		App:   NewApplication(),
 		Pages: tview.NewPages(),
+		UrlField: NewForm(" Request URL: ", "https://httpbin.org/get"),
+		ParamsTable: NewTable(),
+		TextView: NewTextView("Response"),
 	}
 	return g
 }
@@ -48,10 +52,28 @@ func NewForm(label, text string) *tview.InputField {
 	return field
 }
 
-func (g *Gui) GetRequestUrl(tableView *tview.Table) string {
+func NewTable() *tview.Table {
+	table := tview.NewTable()
+	table.SetBorders(true)
+	table.SetFixed(1, 3)
+
+	return table
+}
+
+func NewTextView(title string) *tview.TextView {
+	textView := tview.NewTextView()
+	textView.SetTitle(title)
+	textView.SetBorder(true)
+	textView.SetScrollable(true)
+	textView.SetTextColor(tcell.ColorGreen)
+
+	return textView
+}
+
+func (g *Gui) GetRequestUrl() string {
 	field := g.UrlField
 	urlText := field.GetText()
-	params := g.GetParams(tableView)
+	params := g.GetParams(g.ParamsTable)
 	query := g.GetParamsText(params)
 
 	return urlText + query
@@ -67,6 +89,7 @@ func (g *Gui) HttpRequest(url string) *http.Response {
 		g.App.Stop()
 		os.Exit(1)
 	}
+	defer resp.Body.Close()
 	return resp
 }
 
@@ -83,29 +106,29 @@ func (g *Gui) ParseResponse(resp *http.Response) string {
 
 func (g *Gui) Run(i interface{}) error {
 	app := g.App
-	textView := g.TextView("Response")
+	textView := g.TextView
 	inputUrlField := g.UrlField
-	tableView := g.Table()
+	tableView := g.ParamsTable
+	g.SetTableCells(tableView)
 
 	inputUrlField.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
-			url := g.GetRequestUrl(tableView)
+			url := g.GetRequestUrl()
 			resp := g.HttpRequest(url)
-			defer resp.Body.Close()
 
 			body := g.ParseResponse(resp)
 
 			textView.SetText(body)
 		case tcell.KeyTab:
-			g.ToTableFocus(tableView)
+			g.ToTableFocus()
 		}
 	})
 
 	tableView.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyTab:
-			g.ToUrlFieldFocus(tableView)
+			g.ToUrlFieldFocus()
 		}
 	})
 
@@ -125,41 +148,31 @@ func (g *Gui) Run(i interface{}) error {
 	return nil
 }
 
-func (g *Gui) TextView(title string) *tview.TextView {
-	textView := tview.NewTextView()
-	textView.SetTitle(title)
-	textView.SetBorder(true)
-	textView.SetScrollable(true)
-	textView.SetTextColor(tcell.ColorGreen)
-
-	return textView
-}
-
-func (g *Gui) ToTableFocus(tableView *tview.Table) {
-	g.App.SetFocus(tableView)
-	tableView.SetSelectable(true, true)
-	tableView.SetBordersColor(tcell.ColorGreen)
+func (g *Gui) ToTableFocus() {
+	g.App.SetFocus(g.ParamsTable)
+	g.ParamsTable.SetSelectable(true, true)
+	g.ParamsTable.SetBordersColor(tcell.ColorGreen)
 
 	g.UrlField.SetBorderColor(tcell.ColorWhite)
 }
 
-func (g *Gui) ToUrlFieldFocus(tableView *tview.Table) {
+func (g *Gui) ToUrlFieldFocus() {
 	urlField := g.UrlField
 	g.App.SetFocus(urlField)
-	tableView.SetSelectable(false, false)
-	tableView.SetBordersColor(tcell.ColorWhite)
+	g.ParamsTable.SetSelectable(false, false)
+	g.ParamsTable.SetBordersColor(tcell.ColorWhite)
 
 	urlField.SetBorderColor(tcell.ColorGreen)
 }
 
-func (g *Gui) Input(tableView *tview.Table) {
-	row, col := tableView.GetSelection()
-	cell := tableView.GetCell(row, col)
+func (g *Gui) Input() {
+	row, col := g.ParamsTable.GetSelection()
+	cell := g.ParamsTable.GetCell(row, col)
 	cell.SetTextColor(tcell.ColorWhite)
 
 	text := cell.Text
-	labelCell := tableView.GetCell(0, col)
-	labelIndexCell := tableView.GetCell(row, 0)
+	labelCell := g.ParamsTable.GetCell(0, col)
+	labelIndexCell := g.ParamsTable.GetCell(row, 0)
 	label := fmt.Sprintf(" %s %s: ", labelCell.Text, labelIndexCell.Text)
 	input := NewForm(label, text)
 	input.SetDoneFunc(func(key tcell.Key) {
@@ -168,10 +181,10 @@ func (g *Gui) Input(tableView *tview.Table) {
 			txt := input.GetText()
 			cell.Text = txt
 			if txt != "" {
-				g.AddParamsRow(tableView, row + 1)
+				g.AddParamsRow(g.ParamsTable, row + 1)
 			}
 			g.Pages.RemovePage("input")
-			g.ToTableFocus(tableView)
+			g.ToTableFocus()
 		}
 	})
 
@@ -187,33 +200,28 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 	return grid
 }
 
-func (g *Gui) Table() *tview.Table {
-	table := tview.NewTable()
-	table.SetBorders(true)
-	g.AddTableHeader(table)
-	g.AddParamsRow(table, 1)
-	table.SetFixed(1, 3)
+func (g *Gui) SetTableCells(table *tview.Table) {
 	// 選択された状態でEnterされたとき
-	table.SetSelectedFunc(func(row int, column int) {
-		g.Input(table)
+	g.ParamsTable.SetSelectedFunc(func(row int, column int) {
+		g.Input()
 	})
-
-	return table
+	g.AddTableHeader(g.ParamsTable)
+	g.AddParamsRow(g.ParamsTable, 1)
 }
 
 func (g *Gui) AddTableHeader(table *tview.Table) {
-	table.SetCell(0, 0, g.TableCell("Params", 1, tcell.ColorIndianRed, false))
-	table.SetCell(0, 1, g.TableCell("Key", 2, tcell.ColorIndianRed, false))
-	table.SetCell(0, 2, g.TableCell("Value", 2, tcell.ColorIndianRed, false))
+	table.SetCell(0, 0, g.SetTableCell("Params", 1, tcell.ColorIndianRed, false))
+	table.SetCell(0, 1, g.SetTableCell("Key", 2, tcell.ColorIndianRed, false))
+	table.SetCell(0, 2, g.SetTableCell("Value", 2, tcell.ColorIndianRed, false))
 }
 
 func (g *Gui) AddParamsRow(table *tview.Table, idx int) {
-	table.SetCell(idx, 0, g.TableCell(fmt.Sprint(idx), 1, tcell.ColorWhite, false))
-	table.SetCell(idx, 1, g.TableCell("", 2, tcell.ColorWhite, true))
-	table.SetCell(idx, 2, g.TableCell("", 2, tcell.ColorWhite, true))
+	table.SetCell(idx, 0, g.SetTableCell(fmt.Sprint(idx), 1, tcell.ColorWhite, false))
+	table.SetCell(idx, 1, g.SetTableCell("", 2, tcell.ColorWhite, true))
+	table.SetCell(idx, 2, g.SetTableCell("", 2, tcell.ColorWhite, true))
 }
 
-func (g *Gui) TableCell(title string, width int, color tcell.Color, selectable bool) *tview.TableCell {
+func (g *Gui) SetTableCell(title string, width int, color tcell.Color, selectable bool) *tview.TableCell {
 	tcell := tview.NewTableCell(title)
 	tcell.SetExpansion(width)
 	tcell.SetAlign(tview.AlignCenter)
