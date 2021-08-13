@@ -143,16 +143,22 @@ func (g *Gui) ToUrlFieldFocus(tableView *tview.Table) {
 	urlField.SetBorderColor(tcell.ColorGreen)
 }
 
-func (g *Gui) Input(tableView *tview.Table, cell *tview.TableCell) {
+func (g *Gui) Input(tableView *tview.Table) {
+	row, col := tableView.GetSelection()
+	cell := tableView.GetCell(row, col)
+	cell.SetTextColor(tcell.ColorWhite)
+
 	text := cell.Text
-	input := Form(" params: ", text)
+	labelCell := tableView.GetCell(0, col)
+	labelIndexCell := tableView.GetCell(row, 0)
+	label := fmt.Sprintf(" %s %s: ", labelCell.Text, labelIndexCell.Text)
+	input := Form(label, text)
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
 			txt := input.GetText()
 			cell.Text = txt
 			if txt != "" {
-				row, _ := tableView.GetSelection()
 				g.AddParamsRow(tableView, row + 1)
 			}
 			g.Pages.RemovePage("input")
@@ -180,9 +186,7 @@ func (g *Gui) Table() *tview.Table {
 	table.SetFixed(1, 3)
 	// 選択された状態でEnterされたとき
 	table.SetSelectedFunc(func(row int, column int) {
-		cell := table.GetCell(row, column)
-		cell.SetTextColor(tcell.ColorWhite)
-		g.Input(table, cell)
+		g.Input(table)
 	})
 
 	return table
