@@ -16,7 +16,9 @@ type Gui struct {
 	Pages *tview.Pages
 	UrlField *tview.InputField
 	ParamsTable *tview.Table
-	TextView *tview.TextView
+	ResTextView *tview.TextView
+	HTTPTextView *tview.TextView
+	DropDown *tview.DropDown
 }
 
 type Param struct {
@@ -31,7 +33,9 @@ func New() *Gui {
 		Pages: tview.NewPages(),
 		UrlField: NewForm(" Request URL: ", "https://httpbin.org/get"),
 		ParamsTable: NewTable(),
-		TextView: NewTextView(" Response "),
+		ResTextView: NewTextView(" Response ", ""),
+		HTTPTextView: NewTextView(" HTTP Method ", "GET"),
+		DropDown: NewDropDown(),
 	}
 	return g
 }
@@ -60,15 +64,28 @@ func NewTable() *tview.Table {
 	return table
 }
 
-func NewTextView(title string) *tview.TextView {
+func NewTextView(title, text string) *tview.TextView {
 	textView := tview.NewTextView()
 	textView.SetTitle(title)
 	textView.SetBorder(true)
 	textView.SetScrollable(true)
+	textView.SetText(text)
 	textView.SetTextColor(tcell.ColorGreen)
+	textView.SetToggleHighlights(true)
 
 	return textView
 }
+
+func NewDropDown() *tview.DropDown {
+	dropdown := tview.NewDropDown()
+	dropdown.SetOptions([]string{" GET", " POST", " PUT", " PATCH", " DELETE"}, nil)
+	dropdown.SetFieldWidth(15)
+	dropdown.SetBorder(true)
+	dropdown.SetCurrentOption(0)
+
+	return dropdown
+}
+
 
 func (g *Gui) GetRequestUrl() string {
 	field := g.UrlField
@@ -105,10 +122,21 @@ func (g *Gui) ParseResponse(resp *http.Response) string {
 
 func (g *Gui) Run(i interface{}) error {
 	app := g.App
-	textView := g.TextView
+	resTextView := g.ResTextView
+	httpTextView := g.HTTPTextView
 	inputUrlField := g.UrlField
 	tableView := g.ParamsTable
 	g.SetTableCells(tableView)
+
+	httpTextView.SetTextAlign(tview.AlignCenter)
+	httpTextView.SetDoneFunc(func(key tcell.Key) {
+		switch key {
+		case tcell.KeyEnter:
+			g.NewListModal()
+		case tcell.KeyTab:
+			g.ToUrlFieldFocus()
+		}
+	})
 
 	inputUrlField.SetDoneFunc(func(key tcell.Key) {
 		switch key {
@@ -119,7 +147,7 @@ func (g *Gui) Run(i interface{}) error {
 
 			body := g.ParseResponse(resp)
 
-			textView.SetText(body)
+			resTextView.SetText(body)
 		case tcell.KeyTab:
 			g.ToTableFocus()
 		}
@@ -128,15 +156,20 @@ func (g *Gui) Run(i interface{}) error {
 	tableView.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyTab:
-			g.ToUrlFieldFocus()
+			g.ToHTTPFieldFocus()
 		}
 	})
 
+	columnFlex := tview.NewFlex()
+	columnFlex.SetDirection(tview.FlexColumn)
+	columnFlex.AddItem(g.HTTPTextView, 0, 1, false)
+	columnFlex.AddItem(inputUrlField, 0, 9, false)
+
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(inputUrlField, 3, 1, true)
-	flex.AddItem(tableView, 0, 3, false)
-	flex.AddItem(textView, 0, 5, false)
+	flex.AddItem(columnFlex, 0, 1, false)
+	flex.AddItem(tableView, 0, 5, false)
+	flex.AddItem(resTextView, 0, 5, false)
 
 	g.Pages.AddAndSwitchToPage("main", flex, true)
 
@@ -152,6 +185,7 @@ func (g *Gui) ToTableFocus() {
 	g.App.SetFocus(g.ParamsTable)
 	g.ParamsTable.SetSelectable(true, true)
 	g.ParamsTable.SetBordersColor(tcell.ColorGreen)
+	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
 
 	g.UrlField.SetBorderColor(tcell.ColorWhite)
 }
@@ -161,11 +195,20 @@ func (g *Gui) ToUrlFieldFocus() {
 	g.App.SetFocus(urlField)
 	g.ParamsTable.SetSelectable(false, false)
 	g.ParamsTable.SetBordersColor(tcell.ColorWhite)
+	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
 
 	urlField.SetBorderColor(tcell.ColorGreen)
 }
 
-func (g *Gui) Input() {
+func (g *Gui) ToHTTPFieldFocus() {
+	g.App.SetFocus(g.HTTPTextView)
+	g.ParamsTable.SetSelectable(false, false)
+	g.ParamsTable.SetBordersColor(tcell.ColorWhite)
+	g.UrlField.SetBorderColor(tcell.ColorWhite)
+	g.HTTPTextView.SetBorderColor(tcell.ColorGreen)
+}
+
+func (g *Gui) NewInputModal() {
 	row, col := g.ParamsTable.GetSelection()
 	cell := g.ParamsTable.GetCell(row, col)
 	cell.SetTextColor(tcell.ColorWhite)
@@ -191,6 +234,17 @@ func (g *Gui) Input() {
 	g.Pages.AddAndSwitchToPage("input", g.Modal(input, 0, 3), true).ShowPage("main")
 }
 
+func (g *Gui) NewListModal() {
+	list := tview.NewList()
+	list.AddItem("GET", "", 'a', nil)
+	list.AddItem("POST", "", 'b', nil)
+	list.AddItem("PUT", "", 'c', nil)
+	list.AddItem("PATCH", "", 'd', nil)
+	list.AddItem("DELETE", "", 'e', nil)
+
+	g.Pages.AddAndSwitchToPage("list", g.Modal(list, 0, 10), true).ShowPage("main")
+}
+
 func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 	grid := tview.NewGrid()
 	grid.SetColumns(0, width, 0)
@@ -203,7 +257,7 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 func (g *Gui) SetTableCells(table *tview.Table) {
 	// 選択された状態でEnterされたとき
 	g.ParamsTable.SetSelectedFunc(func(row int, column int) {
-		g.Input()
+		g.NewInputModal()
 	})
 	g.AddTableHeader(g.ParamsTable)
 	g.AddParamsRow(g.ParamsTable, 1)
