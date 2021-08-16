@@ -128,8 +128,8 @@ func (g *Gui) Run(i interface{}) error {
 	paramsTable := g.ParamsTable
 	bodyTable := g.BodyTable
 
-	g.SetTableCells(paramsTable, "Params")
-	g.SetTableCells(bodyTable, "Body")
+	g.SetTableCells(paramsTable, "Query Params")
+	g.SetTableCells(bodyTable, "Request Body")
 
 	httpTextView.SetTextAlign(tview.AlignCenter)
 	httpTextView.SetDoneFunc(func(key tcell.Key) {
@@ -259,7 +259,8 @@ func (g *Gui) NewInputModal(table *tview.Table) {
 	text := cell.Text
 	labelCell := table.GetCell(0, col)
 	labelIndexCell := table.GetCell(row, 0)
-	label := fmt.Sprintf(" %s %s: ", labelCell.Text, labelIndexCell.Text)
+	tableTitle := table.GetCell(0, 0)
+	label := fmt.Sprintf(" %s %s %s: ", tableTitle.Text, labelCell.Text, labelIndexCell.Text)
 	input := NewForm(label, text)
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
