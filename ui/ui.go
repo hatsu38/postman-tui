@@ -231,6 +231,11 @@ func (g *Gui) NewListModal() {
 	list.AddItem("PUT", "", 'c', nil)
 	list.AddItem("PATCH", "", 'd', nil)
 	list.AddItem("DELETE", "", 'e', nil)
+
+	txt := g.HTTPTextView.GetText(true)
+	indices := list.FindItems(txt, "", true, true)
+	list.SetCurrentItem(indices[0])
+
 	list.SetSelectedFunc(func(idx int, mainTxt, subtxt string, key rune) {
 		g.HTTPTextView.SetText(mainTxt)
 		g.Pages.RemovePage("list")
