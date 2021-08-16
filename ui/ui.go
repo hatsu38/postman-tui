@@ -163,11 +163,11 @@ func (g *Gui) Run(i interface{}) error {
 	columnFlex := tview.NewFlex()
 	columnFlex.SetDirection(tview.FlexColumn)
 	columnFlex.AddItem(g.HTTPTextView, 0, 1, false)
-	columnFlex.AddItem(inputUrlField, 0, 9, false)
+	columnFlex.AddItem(inputUrlField, 0, 9, true)
 
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexRow)
-	flex.AddItem(columnFlex, 0, 1, false)
+	flex.AddItem(columnFlex, 0, 1, true)
 	flex.AddItem(tableView, 0, 5, false)
 	flex.AddItem(resTextView, 0, 5, false)
 
@@ -236,13 +236,21 @@ func (g *Gui) NewInputModal() {
 
 func (g *Gui) NewListModal() {
 	list := tview.NewList()
+	list.SetBorder(true)
+	list.SetBorderColor(tcell.ColorGreen)
+	list.SetTitle(" HTTP Methods")
 	list.AddItem("GET", "", 'a', nil)
 	list.AddItem("POST", "", 'b', nil)
 	list.AddItem("PUT", "", 'c', nil)
 	list.AddItem("PATCH", "", 'd', nil)
 	list.AddItem("DELETE", "", 'e', nil)
+	list.SetSelectedFunc(func(idx int, mainTxt, subtxt string, key rune) {
+		g.HTTPTextView.SetText(mainTxt)
+		g.Pages.RemovePage("list")
+		g.ToHTTPFieldFocus()
+	})
 
-	g.Pages.AddAndSwitchToPage("list", g.Modal(list, 0, 10), true).ShowPage("main")
+	g.Pages.AddAndSwitchToPage("list", g.Modal(list, 40, 13), true).ShowPage("main")
 }
 
 func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
@@ -256,7 +264,7 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 
 func (g *Gui) SetTableCells(table *tview.Table) {
 	// 選択された状態でEnterされたとき
-	g.ParamsTable.SetSelectedFunc(func(row int, column int) {
+	g.ParamsTable.SetSelectedFunc(func(row, column int) {
 		g.NewInputModal()
 	})
 	g.AddTableHeader(g.ParamsTable)
