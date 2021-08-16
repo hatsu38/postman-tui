@@ -18,7 +18,6 @@ type Gui struct {
 	ParamsTable *tview.Table
 	ResTextView *tview.TextView
 	HTTPTextView *tview.TextView
-	DropDown *tview.DropDown
 }
 
 type Param struct {
@@ -35,7 +34,6 @@ func New() *Gui {
 		ParamsTable: NewTable(),
 		ResTextView: NewTextView(" Response ", ""),
 		HTTPTextView: NewTextView(" HTTP Method ", "GET"),
-		DropDown: NewDropDown(),
 	}
 	return g
 }
@@ -75,17 +73,6 @@ func NewTextView(title, text string) *tview.TextView {
 
 	return textView
 }
-
-func NewDropDown() *tview.DropDown {
-	dropdown := tview.NewDropDown()
-	dropdown.SetOptions([]string{" GET", " POST", " PUT", " PATCH", " DELETE"}, nil)
-	dropdown.SetFieldWidth(15)
-	dropdown.SetBorder(true)
-	dropdown.SetCurrentOption(0)
-
-	return dropdown
-}
-
 
 func (g *Gui) GetRequestUrl() string {
 	field := g.UrlField
