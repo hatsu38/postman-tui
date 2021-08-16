@@ -84,7 +84,8 @@ func (g *Gui) GetRequestUrl() string {
 }
 
 func (g *Gui) HttpRequest(url string) *http.Response {
-	req, _ := http.NewRequest("GET", url, nil)
+	method := g.HTTPTextView.GetText(true)
+	req, _ := http.NewRequest(method, url, nil)
 	client := new(http.Client)
 
 	resp, err := client.Do(req)
