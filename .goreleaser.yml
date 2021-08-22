@@ -40,18 +40,18 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-brew:
-  github:
-    owner: hatsu38
-    name: homebrew-postman-tui
-  commit_author:
-    name: goreleaserbot
-    email: goreleaser@carlosbecker.com
-  folder: Formula
-  homepage: "https://github.com/hatsu38/postman-tui"
-  description: "Simple HTTP Request TUI Tool!"
-  license: "MIT"
-  install: |
-    bin.install "postman-tui"
-  test: |
-    system "#{bin}/postman-tui"
+brews:
+  - tap:
+      owner: hatsu38
+      name: homebrew-postman-tui
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@carlosbecker.com
+    folder: Formula
+    homepage: "https://github.com/hatsu38/postman-tui"
+    description: "Simple HTTP Request TUI Tool!"
+    license: "MIT"
+    install: |
+      bin.install "postman-tui"
+    test: |
+      system "#{bin}/postman-tui"
