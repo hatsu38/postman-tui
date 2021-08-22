@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/hatsu38/postman-tui/ui"
