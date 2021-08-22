@@ -40,10 +40,10 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-brews:
+brew:
   github:
-      owner: hatsu38
-      name: homebrew-postman-tui
+    owner: hatsu38
+    name: homebrew-postman-tui
   commit_author:
     name: goreleaserbot
     email: goreleaser@carlosbecker.com
