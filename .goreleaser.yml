@@ -1,6 +1,8 @@
 # This is an example .goreleaser.yml file with some sane defaults.
 # Make sure to check the documentation at http://goreleaser.com
 project_name: postman-tui
+env:
+  - GO111MODULE=on
 before:
   hooks:
     - go mod tidy
@@ -11,14 +13,13 @@ builds:
       - linux
       - windows
       - darwin
-    builds:
-      - main: .
-        binary: gist
-        ldflags:
-          - -s -w
-          - -X main.Version={{.Version}}
-          - -X main.Revision={{.ShortCommit}}
-          - -X main.Date={{.Date}}
+    main: .
+    binary: postman-tui
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Revision={{.ShortCommit}}
+      - -X main.Date={{.Date}}
 archives:
   - replacements:
       darwin: Darwin
