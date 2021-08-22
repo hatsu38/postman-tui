@@ -1,42 +1,42 @@
 package ui
 
 import (
-	"net/http"
-	"net/url"
-	"strings"
 	"fmt"
-	"os"
 	"io"
 	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 type Gui struct {
-	App   *tview.Application
-	Pages *tview.Pages
-	UrlField *tview.InputField
-	ParamsTable *tview.Table
-	BodyTable *tview.Table
-	ResTextView *tview.TextView
+	App          *tview.Application
+	Pages        *tview.Pages
+	UrlField     *tview.InputField
+	ParamsTable  *tview.Table
+	BodyTable    *tview.Table
+	ResTextView  *tview.TextView
 	HTTPTextView *tview.TextView
 }
 
 type Param struct {
-	Key string
+	Key   string
 	Value string
 }
 type Params []Param
 
 func New() *Gui {
 	g := &Gui{
-		App:   NewApplication(),
-		Pages: tview.NewPages(),
-		UrlField: NewForm(" Request URL: ", "https://httpbin.org/get"),
-		ParamsTable: NewTable(),
-		BodyTable: NewTable(),
-		ResTextView: NewTextView(" Response ", ""),
+		App:          NewApplication(),
+		Pages:        tview.NewPages(),
+		UrlField:     NewForm(" Request URL: ", "https://httpbin.org/get"),
+		ParamsTable:  NewTable(),
+		BodyTable:    NewTable(),
+		ResTextView:  NewTextView(" Response ", ""),
 		HTTPTextView: NewTextView(" HTTP Method ", "GET"),
 	}
 	return g
@@ -268,7 +268,7 @@ func (g *Gui) NewInputModal(table *tview.Table) {
 			txt := input.GetText()
 			cell.Text = txt
 			if txt != "" {
-				g.AddParamsRow(table, row + 1)
+				g.AddParamsRow(table, row+1)
 			}
 			g.Pages.RemovePage("input")
 			g.App.SetFocus(table)
@@ -350,8 +350,8 @@ func (g *Gui) GetParams(table *tview.Table) Params {
 	for r := 1; r < rows; r++ {
 		key := table.GetCell(r, 1).Text
 		value := table.GetCell(r, 2).Text
-		param := Param {
-			Key: key,
+		param := Param{
+			Key:   key,
 			Value: value,
 		}
 		params = append(params, param)

@@ -1,0 +1,56 @@
+# This is an example .goreleaser.yml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+project_name: postman-tui
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    builds:
+      - main: .
+        binary: gist
+        ldflags:
+          - -s -w
+          - -X main.Version={{.Version}}
+          - -X main.Revision={{.ShortCommit}}
+          - -X main.Date={{.Date}}
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    files:
+      - LICENSE
+      - CREDITS
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+brews:
+  github:
+      owner: hatsu38
+      name: homebrew-postman-tui
+  commit_author:
+    name: goreleaserbot
+    email: goreleaser@carlosbecker.com
+  folder: Formula
+  homepage: "https://github.com/hatsu38/postman-tui"
+  description: "Simple HTTP Request TUI Tool!"
+  license: "MIT"
+  install: |
+    bin.install "postman-tui"
+  test: |
+    system "#{bin}/postman-tui"
