@@ -12,6 +12,9 @@ https://user-images.githubusercontent.com/16137809/129535113-e5c9447a-0171-4056-
 brew install hatsu38/postman-tui/postman-tui
 ```
 
+<img width="704" alt="usage postman-tui" src="https://user-images.githubusercontent.com/16137809/130349991-781f28d6-c1ec-46dd-b474-a11fd6664d11.png">
+
+
 ## Lint
 
 ```sh
