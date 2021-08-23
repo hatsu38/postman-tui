@@ -23,6 +23,16 @@ type Gui struct {
 	HTTPTextView *tview.TextView
 }
 
+var (
+	defaultText = `
+                _                                _         _
+_ __   ___  ___| |_ _ __ ___   __ _ _ __        | |_ _   _(_)
+| '_ \ / _ \/ __| __| '_ ' _ \ / _' | '_ \ _____| __| | | | |
+| |_) | (_) \__ \ |_| | | | | | (_| | | | |_____| |_| |_| | |
+| .__/ \___/|___/\__|_| |_| |_|\__,_|_| |_|      \__|\__,_|_|
+|_|`
+)
+
 type Param struct {
 	Key   string
 	Value string
@@ -36,14 +46,14 @@ func New() *Gui {
 		UrlField:     NewForm(" Request URL: ", "https://httpbin.org/get"),
 		ParamsTable:  NewTable(),
 		BodyTable:    NewTable(),
-		ResTextView:  NewTextView(" Response ", ""),
-		HTTPTextView: NewTextView(" HTTP Method ", "GET"),
+		ResTextView:  NewTextView(" Response ", defaultText),
+		HTTPTextView: NewTextView(" HTTP ", "GET"),
 	}
 	return g
 }
 
 func NewApplication() *tview.Application {
-	return tview.NewApplication().EnableMouse(true)
+	return tview.NewApplication()
 }
 
 func NewForm(label, text string) *tview.InputField {
@@ -247,6 +257,8 @@ func (g *Gui) ToFocus() {
 	case g.BodyTable:
 		g.ToHTTPFieldFocus()
 	case g.HTTPTextView:
+		g.ToUrlFieldFocus()
+	default:
 		g.ToUrlFieldFocus()
 	}
 }
