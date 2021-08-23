@@ -16,23 +16,13 @@ import (
 type Gui struct {
 	App          *tview.Application
 	Pages        *tview.Pages
-	UrlField     *tview.InputField
-	ParamsTable  *tview.Table
-	BodyTable    *tview.Table
-	ResTextView  *tview.TextView
-	HTTPTextView *tview.TextView
+	UrlField     *urlField
+	ParamsTable  *table
+	BodyTable    *table
+	ResTextView  *resTestView
+	HTTPTextView *httpTestView
 	NavTextView  *navigate
 }
-
-var (
-	defaultText = `
-                _                                _         _
-_ __   ___  ___| |_ _ __ ___   __ _ _ __        | |_ _   _(_)
-| '_ \ / _ \/ __| __| '_ ' _ \ / _' | '_ \ _____| __| | | | |
-| |_) | (_) \__ \ |_| | | | | | (_| | | | |_____| |_| |_| | |
-| .__/ \___/|___/\__|_| |_| |_|\__,_|_| |_|      \__|\__,_|_|
-|_|`
-)
 
 type Param struct {
 	Key   string
@@ -42,52 +32,16 @@ type Params []Param
 
 func New() *Gui {
 	g := &Gui{
-		App:          NewApplication(),
+		App:          tview.NewApplication(),
 		Pages:        tview.NewPages(),
-		UrlField:     NewForm(" Request URL: ", "https://httpbin.org/get"),
-		ParamsTable:  NewTable(),
-		BodyTable:    NewTable(),
-		ResTextView:  NewTextView(" Response ", defaultText),
-		HTTPTextView: NewTextView(" HTTP ", "GET"),
+		UrlField:     newUrlField(" Request URL: ", "https://httpbin.org/get"),
+		ParamsTable:  newTable(),
+		BodyTable:    newTable(),
+		ResTextView:  newResTextView(),
+		HTTPTextView: newHTTPTextView(),
 		NavTextView:  newNavigate(),
 	}
 	return g
-}
-
-func NewApplication() *tview.Application {
-	return tview.NewApplication()
-}
-
-func NewForm(label, text string) *tview.InputField {
-	field := tview.NewInputField()
-	field.SetLabel(label)
-	field.SetFieldBackgroundColor(tcell.ColorBlack)
-	field.SetBorder(true)
-	field.SetBorderColor(tcell.ColorGreen)
-	field.SetLabelColor(tcell.ColorIndianRed)
-	field.SetText(text)
-
-	return field
-}
-
-func NewTable() *tview.Table {
-	table := tview.NewTable()
-	table.SetBorders(true)
-	table.SetFixed(1, 3)
-
-	return table
-}
-
-func NewTextView(title, text string) *tview.TextView {
-	textView := tview.NewTextView()
-	textView.SetTitle(title)
-	textView.SetBorder(true)
-	textView.SetScrollable(true)
-	textView.SetText(text)
-	textView.SetTextColor(tcell.ColorGreen)
-	textView.SetToggleHighlights(true)
-
-	return textView
 }
 
 func (g *Gui) GetRequestUrl() string {
@@ -143,36 +97,10 @@ func (g *Gui) Run(i interface{}) error {
 	g.SetTableCells(paramsTable, "Query Params")
 	g.SetTableCells(bodyTable, "Request Body")
 
-	httpTextView.SetTextAlign(tview.AlignCenter)
-	httpTextView.SetDoneFunc(func(key tcell.Key) {
-		switch key {
-		case tcell.KeyEnter:
-			g.NewHTTPListModal()
-		case tcell.KeyTab:
-			g.ToFocus()
-		}
-	})
+	httpTextView.setFunc(g)
+	inputUrlField.setFunc(g)
 
-	inputUrlField.SetDoneFunc(func(key tcell.Key) {
-		switch key {
-		case tcell.KeyEnter:
-			url := g.GetRequestUrl()
-			resp := g.HttpRequest(url)
-			defer resp.Body.Close()
-
-			body := g.ParseResponse(resp)
-			resTextView.SetText(body)
-		case tcell.KeyTab:
-			g.ToFocus()
-		}
-	})
-
-	paramsTable.SetDoneFunc(func(key tcell.Key) {
-		switch key {
-		case tcell.KeyTab:
-			g.ToFocus()
-		}
-	})
+	paramsTable.setFunc(g)
 
 	bodyTable.SetDoneFunc(func(key tcell.Key) {
 		switch key {
@@ -277,7 +205,7 @@ func (g *Gui) ToFocus() {
 	}
 }
 
-func (g *Gui) NewInputModal(table *tview.Table) {
+func (g *Gui) NewInputModal(table *table) {
 	row, col := table.GetSelection()
 	cell := table.GetCell(row, col)
 	cell.SetTextColor(tcell.ColorWhite)
@@ -287,7 +215,7 @@ func (g *Gui) NewInputModal(table *tview.Table) {
 	labelIndexCell := table.GetCell(row, 0)
 	tableTitle := table.GetCell(0, 0)
 	label := fmt.Sprintf(" %s %s %s: ", tableTitle.Text, labelCell.Text, labelIndexCell.Text)
-	input := NewForm(label, text)
+	input := newUrlField(label, text)
 	input.SetDoneFunc(func(key tcell.Key) {
 		switch key {
 		case tcell.KeyEnter:
@@ -337,7 +265,7 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 	return grid
 }
 
-func (g *Gui) SetTableCells(table *tview.Table, title string) {
+func (g *Gui) SetTableCells(table *table, title string) {
 	// 選択された状態でEnterされたとき
 	table.SetSelectedFunc(func(row, column int) {
 		g.NewInputModal(table)
@@ -346,13 +274,13 @@ func (g *Gui) SetTableCells(table *tview.Table, title string) {
 	g.AddParamsRow(table, 1)
 }
 
-func (g *Gui) AddTableHeader(table *tview.Table, cellTxt string) {
+func (g *Gui) AddTableHeader(table *table, cellTxt string) {
 	table.SetCell(0, 0, g.SetTableCell(cellTxt, 1, tcell.ColorIndianRed, false))
 	table.SetCell(0, 1, g.SetTableCell("Key", 3, tcell.ColorIndianRed, false))
 	table.SetCell(0, 2, g.SetTableCell("Value", 3, tcell.ColorIndianRed, false))
 }
 
-func (g *Gui) AddParamsRow(table *tview.Table, idx int) {
+func (g *Gui) AddParamsRow(table *table, idx int) {
 	table.SetCell(idx, 0, g.SetTableCell(fmt.Sprint(idx), 1, tcell.ColorWhite, false))
 	table.SetCell(idx, 1, g.SetTableCell("", 3, tcell.ColorWhite, true))
 	table.SetCell(idx, 2, g.SetTableCell("", 3, tcell.ColorWhite, true))
@@ -369,7 +297,7 @@ func (g *Gui) SetTableCell(title string, width int, color tcell.Color, selectabl
 	return tcell
 }
 
-func (g *Gui) GetParams(table *tview.Table) Params {
+func (g *Gui) GetParams(table *table) Params {
 	var params Params
 
 	rows := table.GetRowCount()
