@@ -21,6 +21,7 @@ type Gui struct {
 	BodyTable    *tview.Table
 	ResTextView  *tview.TextView
 	HTTPTextView *tview.TextView
+	NavTextView  *navigate
 }
 
 var (
@@ -48,6 +49,7 @@ func New() *Gui {
 		BodyTable:    NewTable(),
 		ResTextView:  NewTextView(" Response ", defaultText),
 		HTTPTextView: NewTextView(" HTTP ", "GET"),
+		NavTextView:  newNavigate(),
 	}
 	return g
 }
@@ -190,12 +192,19 @@ func (g *Gui) Run(i interface{}) error {
 	requestFlex.AddItem(paramsTable, 0, 5, false)
 	requestFlex.AddItem(bodyTable, 0, 5, false)
 
-	flex := tview.NewFlex()
-	flex.SetDirection(tview.FlexColumn)
-	flex.AddItem(requestFlex, 0, 5, true)
-	flex.AddItem(resTextView, 0, 3, false)
+	reqResflex := tview.NewFlex()
+	reqResflex.SetDirection(tview.FlexColumn)
+	reqResflex.AddItem(requestFlex, 0, 5, true)
+	reqResflex.AddItem(resTextView, 0, 3, false)
 
-	g.Pages.AddAndSwitchToPage("main", flex, true)
+	appFlex := tview.NewFlex()
+	appFlex.SetDirection(tview.FlexRow)
+	appFlex.AddItem(reqResflex, 0, 9, true)
+	appFlex.AddItem(g.NavTextView, 1, 1, false)
+
+	g.ToUrlFieldFocus()
+
+	g.Pages.AddAndSwitchToPage("main", appFlex, true)
 
 	if err := app.SetRoot(g.Pages, true).Run(); err != nil {
 		log.Println(err)
@@ -203,16 +212,6 @@ func (g *Gui) Run(i interface{}) error {
 	}
 
 	return nil
-}
-
-func (g *Gui) ToParamsTableFocus() {
-	g.App.SetFocus(g.ParamsTable)
-	g.ParamsTable.SetSelectable(true, true)
-	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
-	g.UrlField.SetBorderColor(tcell.ColorWhite)
-	g.BodyTable.SetBorderColor(tcell.ColorWhite)
-
-	g.ParamsTable.SetBordersColor(tcell.ColorGreen)
 }
 
 func (g *Gui) ToUrlFieldFocus() {
@@ -223,6 +222,7 @@ func (g *Gui) ToUrlFieldFocus() {
 	g.BodyTable.SetBorderColor(tcell.ColorWhite)
 
 	urlField.SetBorderColor(tcell.ColorGreen)
+	g.NavTextView.update("url")
 }
 
 func (g *Gui) ToHTTPFieldFocus() {
@@ -233,6 +233,19 @@ func (g *Gui) ToHTTPFieldFocus() {
 	g.UrlField.SetBorderColor(tcell.ColorWhite)
 
 	g.HTTPTextView.SetBorderColor(tcell.ColorGreen)
+	g.NavTextView.update("http")
+}
+
+func (g *Gui) ToParamsTableFocus() {
+	g.App.SetFocus(g.ParamsTable)
+	g.ParamsTable.SetSelectable(true, true)
+	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
+	g.UrlField.SetBorderColor(tcell.ColorWhite)
+	g.BodyTable.SetBorderColor(tcell.ColorWhite)
+
+	g.ParamsTable.SetBordersColor(tcell.ColorGreen)
+	g.NavTextView.update("paramsTable")
+
 }
 
 func (g *Gui) ToBodyTable() {
@@ -244,6 +257,7 @@ func (g *Gui) ToBodyTable() {
 	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
 
 	g.BodyTable.SetBordersColor(tcell.ColorGreen)
+	g.NavTextView.update("bodyTable")
 }
 
 func (g *Gui) ToFocus() {
