@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
@@ -23,12 +22,6 @@ type Gui struct {
 	HTTPTextView *httpTestView
 	NavTextView  *navigate
 }
-
-type Param struct {
-	Key   string
-	Value string
-}
-type Params []Param
 
 func New() *Gui {
 	g := &Gui{
@@ -48,7 +41,7 @@ func (g *Gui) GetRequestUrl() string {
 	field := g.UrlField
 	urlText := field.GetText()
 	params := g.ParamsTable.GetParams()
-	query := g.GetParamsText(params)
+	query := params.GetParamsText()
 
 	return urlText + query
 }
@@ -56,7 +49,7 @@ func (g *Gui) GetRequestUrl() string {
 func (g *Gui) HttpRequest(url string) *http.Response {
 
 	bodyParams := g.BodyTable.GetParams()
-	value := g.GetBodyParamsText(bodyParams)
+	value := bodyParams.GetBodyParamsText()
 
 	method := g.HTTPTextView.GetText(true)
 	req, _ := http.NewRequest(method, url, strings.NewReader(value))
@@ -256,37 +249,4 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 	grid.AddItem(p, 1, 1, 1, 1, 1, 1, true)
 
 	return grid
-}
-
-func (g *Gui) GetParamsText(params Params) string {
-	var query string
-	for i, v := range params {
-		if v.Key == "" || v.Value == "" {
-			continue
-		}
-		if i == 0 {
-			query += "?"
-		} else {
-			query += "&"
-		}
-		query += fmt.Sprintf("%s=%s", v.Key, v.Value)
-	}
-
-	return query
-}
-
-func (g *Gui) GetBodyParamsText(params Params) string {
-	val := url.Values{}
-	for i, v := range params {
-		if v.Key == "" || v.Value == "" {
-			continue
-		}
-		if i == 0 {
-			val.Set(v.Key, v.Value)
-		} else {
-			val.Add(v.Key, v.Value)
-		}
-	}
-
-	return val.Encode()
 }
