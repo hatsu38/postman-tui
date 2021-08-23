@@ -47,7 +47,7 @@ func New() *Gui {
 func (g *Gui) GetRequestUrl() string {
 	field := g.UrlField
 	urlText := field.GetText()
-	params := g.GetParams(g.ParamsTable)
+	params := g.ParamsTable.GetParams()
 	query := g.GetParamsText(params)
 
 	return urlText + query
@@ -55,7 +55,7 @@ func (g *Gui) GetRequestUrl() string {
 
 func (g *Gui) HttpRequest(url string) *http.Response {
 
-	bodyParams := g.GetParams(g.BodyTable)
+	bodyParams := g.BodyTable.GetParams()
 	value := g.GetBodyParamsText(bodyParams)
 
 	method := g.HTTPTextView.GetText(true)
@@ -94,20 +94,13 @@ func (g *Gui) Run(i interface{}) error {
 	paramsTable := g.ParamsTable
 	bodyTable := g.BodyTable
 
-	g.SetTableCells(paramsTable, "Query Params")
-	g.SetTableCells(bodyTable, "Request Body")
+	paramsTable.SetTableCells(g, "Query Params")
+	bodyTable.SetTableCells(g, "Request Body")
 
 	httpTextView.setFunc(g)
 	inputUrlField.setFunc(g)
-
 	paramsTable.setFunc(g)
-
-	bodyTable.SetDoneFunc(func(key tcell.Key) {
-		switch key {
-		case tcell.KeyTab:
-			g.ToFocus()
-		}
-	})
+	bodyTable.setFunc(g)
 
 	httpFlex := tview.NewFlex()
 	httpFlex.SetDirection(tview.FlexColumn)
@@ -222,7 +215,7 @@ func (g *Gui) NewInputModal(table *table) {
 			txt := input.GetText()
 			cell.Text = txt
 			if txt != "" {
-				g.AddParamsRow(table, row+1)
+				table.AddParamsRow(row + 1)
 			}
 			g.Pages.RemovePage("input")
 			g.App.SetFocus(table)
@@ -263,55 +256,6 @@ func (g *Gui) Modal(p tview.Primitive, width, height int) tview.Primitive {
 	grid.AddItem(p, 1, 1, 1, 1, 1, 1, true)
 
 	return grid
-}
-
-func (g *Gui) SetTableCells(table *table, title string) {
-	// 選択された状態でEnterされたとき
-	table.SetSelectedFunc(func(row, column int) {
-		g.NewInputModal(table)
-	})
-	g.AddTableHeader(table, title)
-	g.AddParamsRow(table, 1)
-}
-
-func (g *Gui) AddTableHeader(table *table, cellTxt string) {
-	table.SetCell(0, 0, g.SetTableCell(cellTxt, 1, tcell.ColorIndianRed, false))
-	table.SetCell(0, 1, g.SetTableCell("Key", 3, tcell.ColorIndianRed, false))
-	table.SetCell(0, 2, g.SetTableCell("Value", 3, tcell.ColorIndianRed, false))
-}
-
-func (g *Gui) AddParamsRow(table *table, idx int) {
-	table.SetCell(idx, 0, g.SetTableCell(fmt.Sprint(idx), 1, tcell.ColorWhite, false))
-	table.SetCell(idx, 1, g.SetTableCell("", 3, tcell.ColorWhite, true))
-	table.SetCell(idx, 2, g.SetTableCell("", 3, tcell.ColorWhite, true))
-}
-
-func (g *Gui) SetTableCell(title string, width int, color tcell.Color, selectable bool) *tview.TableCell {
-	tcell := tview.NewTableCell(title)
-	tcell.SetExpansion(width)
-	tcell.SetAlign(tview.AlignCenter)
-	tcell.SetTextColor(color)
-	tcell.SetSelectable(selectable)
-	tcell.SetTransparency(true)
-
-	return tcell
-}
-
-func (g *Gui) GetParams(table *table) Params {
-	var params Params
-
-	rows := table.GetRowCount()
-	for r := 1; r < rows; r++ {
-		key := table.GetCell(r, 1).Text
-		value := table.GetCell(r, 2).Text
-		param := Param{
-			Key:   key,
-			Value: value,
-		}
-		params = append(params, param)
-	}
-
-	return params
 }
 
 func (g *Gui) GetParamsText(params Params) string {
