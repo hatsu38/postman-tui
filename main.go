@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/hatsu38/postman-tui/ui"
+	"github.com/hatsu38/postman-tui/gui"
 )
 
 var (
@@ -37,7 +37,7 @@ Author:
 
 func run() int {
 	var i interface{}
-	if err := ui.New().Run(i); err != nil {
+	if err := gui.New().Run(i); err != nil {
 		log.Println(err)
 		return 1
 	}
