@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/hatsu38/postman-tui/ui"
+	"github.com/hatsu38/postman-tui/gui"
 )
 
 var (
@@ -15,8 +15,8 @@ var (
 )
 
 func usage() {
-	format :=
-`		_                                _         _
+	format := `
+                _                                _         _
 _ __   ___  ___| |_ _ __ ___   __ _ _ __        | |_ _   _(_)
 | '_ \ / _ \/ __| __| '_ ' _ \ / _' | '_ \ _____| __| | | | |
 | |_) | (_) \__ \ |_| | | | | | (_| | | | |_____| |_| |_| | |
@@ -27,7 +27,8 @@ Usage:
   postman-tui
 
   Flags:
-    -version: Print the current version
+    -v, -version: Print the current version
+    -h, -help: Print postman-tui usage
 
 Author:
   hatsu38<hajiwata0308@gmail.com>
@@ -37,7 +38,7 @@ Author:
 
 func run() int {
 	var i interface{}
-	if err := ui.New().Run(i); err != nil {
+	if err := gui.New().Run(i); err != nil {
 		log.Println(err)
 		return 1
 	}
@@ -47,6 +48,7 @@ func run() int {
 func main() {
 	var withVersion bool
 	flag.BoolVar(&withVersion, "version", false, "Print the current version")
+	flag.BoolVar(&withVersion, "v", false, "Print the current version")
 
 	flag.Usage = usage
 	flag.Parse()
