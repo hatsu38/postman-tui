@@ -27,7 +27,8 @@ Usage:
   postman-tui
 
   Flags:
-    -version: Print the current version
+    -v, -version: Print the current version
+    -h, -help: Print postman-tui usage
 
 Author:
   hatsu38<hajiwata0308@gmail.com>
@@ -47,6 +48,7 @@ func run() int {
 func main() {
 	var withVersion bool
 	flag.BoolVar(&withVersion, "version", false, "Print the current version")
+	flag.BoolVar(&withVersion, "v", false, "Print the current version")
 
 	flag.Usage = usage
 	flag.Parse()
