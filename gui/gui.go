@@ -91,6 +91,7 @@ func (g *Gui) Run(i interface{}) error {
 	inputUrlField.setFunc(g)
 	paramsTable.setFunc(g)
 	bodyTable.setFunc(g)
+	resTextView.setFunc(g)
 
 	httpFlex := tview.NewFlex()
 	httpFlex.SetDirection(tview.FlexColumn)
@@ -111,7 +112,7 @@ func (g *Gui) Run(i interface{}) error {
 	appFlex := tview.NewFlex()
 	appFlex.SetDirection(tview.FlexRow)
 	appFlex.AddItem(reqResflex, 0, 9, true)
-	appFlex.AddItem(g.NavTextView, 1, 1, false)
+	appFlex.AddItem(g.NavTextView, 2, 1, false)
 
 	g.ToUrlFieldFocus()
 
@@ -142,6 +143,7 @@ func (g *Gui) ToHTTPFieldFocus() {
 	g.ParamsTable.SetBordersColor(tcell.ColorWhite)
 	g.BodyTable.SetBordersColor(tcell.ColorWhite)
 	g.UrlField.SetBorderColor(tcell.ColorWhite)
+	g.ResTextView.SetBorderColor(tcell.ColorWhite)
 
 	g.HTTPTextView.SetBorderColor(tcell.ColorGreen)
 	g.NavTextView.update("http")
@@ -153,6 +155,7 @@ func (g *Gui) ToParamsTableFocus() {
 	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
 	g.UrlField.SetBorderColor(tcell.ColorWhite)
 	g.BodyTable.SetBorderColor(tcell.ColorWhite)
+	g.ResTextView.SetBorderColor(tcell.ColorWhite)
 
 	g.ParamsTable.SetBordersColor(tcell.ColorGreen)
 	g.NavTextView.update("paramsTable")
@@ -166,9 +169,21 @@ func (g *Gui) ToBodyTable() {
 	g.ParamsTable.SetBordersColor(tcell.ColorWhite)
 	g.UrlField.SetBorderColor(tcell.ColorWhite)
 	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
+	g.ResTextView.SetBorderColor(tcell.ColorWhite)
 
 	g.BodyTable.SetBordersColor(tcell.ColorGreen)
 	g.NavTextView.update("bodyTable")
+}
+
+func (g *Gui) ToResTextField() {
+	g.App.SetFocus(g.ResTextView)
+	g.ParamsTable.SetBordersColor(tcell.ColorWhite)
+	g.UrlField.SetBorderColor(tcell.ColorWhite)
+	g.HTTPTextView.SetBorderColor(tcell.ColorWhite)
+	g.BodyTable.SetBordersColor(tcell.ColorWhite)
+
+	g.ResTextView.SetBorderColor(tcell.ColorGreen)
+	g.NavTextView.update("resField")
 }
 
 func (g *Gui) ToFocus() {
@@ -176,6 +191,8 @@ func (g *Gui) ToFocus() {
 
 	switch primitive {
 	case g.UrlField:
+		g.ToResTextField()
+	case g.ResTextView:
 		g.ToParamsTableFocus()
 	case g.ParamsTable:
 		g.ToBodyTable()
