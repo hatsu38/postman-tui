@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -36,6 +37,9 @@ func newResTextView() *resTestView {
 func (t *resTestView) setFunc(g *Gui) {
 	t.SetDoneFunc(func(key tcell.Key) {
 		switch key {
+		case tcell.KeyEnter:
+			txt := t.GetText(true)
+			clipboard.WriteAll(txt)
 		case tcell.KeyTab:
 			g.ToFocus()
 		}

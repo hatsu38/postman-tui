@@ -16,7 +16,7 @@ func newNavigate() *navigate {
 		keybindings: map[string]string{
 			"http":        " Tab: move url field, Enter: change http method",
 			"url":         " Tab: move Response Field, Enter: http request",
-			"resField":    " Tab: move params table, Enter: set body paramater",
+			"resField":    " Tab: move params table, Enter: Copy response text to clipboard",
 			"paramsTable": " Tab: move body table, Enter: set query paramater",
 			"bodyTable":   " Tab: move params table, Enter: set body paramater",
 		},
