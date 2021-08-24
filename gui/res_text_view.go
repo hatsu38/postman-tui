@@ -32,3 +32,12 @@ func newResTextView() *resTestView {
 
 	return textView
 }
+
+func (t *resTestView) setFunc(g *Gui) {
+	t.SetDoneFunc(func(key tcell.Key) {
+		switch key {
+		case tcell.KeyTab:
+			g.ToFocus()
+		}
+	})
+}

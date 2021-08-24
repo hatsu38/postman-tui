@@ -14,8 +14,9 @@ func newNavigate() *navigate {
 	return &navigate{
 		TextView: tview.NewTextView().SetTextColor(tcell.ColorYellow),
 		keybindings: map[string]string{
-			"url":         " Tab: move params table, Enter: http request",
 			"http":        " Tab: move url field, Enter: change http method",
+			"url":         " Tab: move Response Field, Enter: http request",
+			"resField":    " Tab: move params table, Enter: set body paramater",
 			"paramsTable": " Tab: move body table, Enter: set query paramater",
 			"bodyTable":   " Tab: move params table, Enter: set body paramater",
 		},
