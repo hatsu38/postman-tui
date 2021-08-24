@@ -3,7 +3,11 @@
 
 This is a TUI tool that allows you to make an HTTP Request and check the response, just like Postman.
 
-https://user-images.githubusercontent.com/16137809/129535113-e5c9447a-0171-4056-9f4d-78ca97d40fb6.mov
+
+
+https://user-images.githubusercontent.com/16137809/130563705-b7ef6445-e7be-4bec-bdb8-f7a20323128b.mov
+
+
 
 
 ## Install
