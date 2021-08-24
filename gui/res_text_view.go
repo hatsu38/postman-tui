@@ -40,6 +40,7 @@ func (t *resTestView) setFunc(g *Gui) {
 		case tcell.KeyEnter:
 			txt := t.GetText(true)
 			clipboard.WriteAll(txt)
+			g.NavTextView.update("copied")
 		case tcell.KeyTab:
 			g.ToFocus()
 		}

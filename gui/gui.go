@@ -112,7 +112,7 @@ func (g *Gui) Run(i interface{}) error {
 	appFlex := tview.NewFlex()
 	appFlex.SetDirection(tview.FlexRow)
 	appFlex.AddItem(reqResflex, 0, 9, true)
-	appFlex.AddItem(g.NavTextView, 1, 1, false)
+	appFlex.AddItem(g.NavTextView, 2, 1, false)
 
 	g.ToUrlFieldFocus()
 
