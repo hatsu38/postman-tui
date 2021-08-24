@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -10,6 +11,11 @@ import (
 type table struct {
 	*tview.Table
 }
+type Param struct {
+	Key   string
+	Value string
+}
+type Params []Param
 
 func newTable() *table {
 	table := &table{
@@ -62,6 +68,16 @@ func SetTableCell(title string, width int, color tcell.Color, selectable bool) *
 	return tcell
 }
 
+func (t *table) GetQuery() string {
+	params := t.GetParams()
+	return params.ToQueryString()
+}
+
+func (t *table) GetBodyParams() string {
+	params := t.GetParams()
+	return params.ToBodyParams()
+}
+
 func (t *table) GetParams() Params {
 	var params Params
 
@@ -77,4 +93,37 @@ func (t *table) GetParams() Params {
 	}
 
 	return params
+}
+
+func (p Params) ToQueryString() string {
+	var query string
+	for i, v := range p {
+		if v.Key == "" || v.Value == "" {
+			continue
+		}
+		if i == 0 {
+			query += "?"
+		} else {
+			query += "&"
+		}
+		query += fmt.Sprintf("%s=%s", v.Key, v.Value)
+	}
+
+	return query
+}
+
+func (p Params) ToBodyParams() string {
+	val := url.Values{}
+	for i, v := range p {
+		if v.Key == "" || v.Value == "" {
+			continue
+		}
+		if i == 0 {
+			val.Set(v.Key, v.Value)
+		} else {
+			val.Add(v.Key, v.Value)
+		}
+	}
+
+	return val.Encode()
 }

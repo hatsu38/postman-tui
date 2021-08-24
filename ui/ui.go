@@ -40,16 +40,13 @@ func New() *Gui {
 func (g *Gui) GetRequestUrl() string {
 	field := g.UrlField
 	urlText := field.GetText()
-	params := g.ParamsTable.GetParams()
-	query := params.GetParamsText()
+	query := g.ParamsTable.GetQuery()
 
 	return urlText + query
 }
 
 func (g *Gui) HttpRequest(url string) *http.Response {
-
-	bodyParams := g.BodyTable.GetParams()
-	value := bodyParams.GetBodyParamsText()
+	value := g.BodyTable.GetBodyParams()
 
 	method := g.HTTPTextView.GetText(true)
 	req, _ := http.NewRequest(method, url, strings.NewReader(value))
